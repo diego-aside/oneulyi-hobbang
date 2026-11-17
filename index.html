@@ -235,7 +235,7 @@
         <div class="head-right">
           <span class="brand-chip">삼립호빵</span>
           <div class="countdown" id="countdown">--:--:--</div>
-          <div class="countdown-sub">자정이 되면 오늘 호빵이 식어요</div>
+          <div class="countdown-sub">한국 시간 자정이 되면 오늘 호빵이 식어요</div>
         </div>
       </div>
 
@@ -787,14 +787,23 @@
         b.style.top = y + 'px';
       }
 
-      /* ================= 날짜 · 카운트다운 ================= */
+      /* ================= 날짜 · 카운트다운 (한국 시간 KST, Asia/Seoul 고정) ================= */
+      /* 기기 로컬 시간대를 쓰지 않는다. Date.now()는 UTC 기준 epoch이므로
+         +9시간을 더한 뒤 UTC 게터로 읽으면 한국 벽시계가 된다.
+         한국은 서머타임이 없어 +9시간 고정 오프셋으로 충분하다.
+         (Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul'})와 동일한 결과) */
+      var KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+      function kstNow(){
+        return new Date(Date.now() + KST_OFFSET_MS);
+      }
       function tickClock(){
-        var now = new Date();
+        var kst = kstNow();
         var days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
         document.getElementById('dateLine').textContent =
-          (now.getMonth() + 1) + '월 ' + now.getDate() + '일 ' + days[now.getDay()] + ', 같은 날 호빵을 먹는 사람들';
-        var mid = new Date(now); mid.setHours(24, 0, 0, 0);
-        var diff = Math.max(0, Math.floor((mid - now) / 1000));
+          (kst.getUTCMonth() + 1) + '월 ' + kst.getUTCDate() + '일 ' + days[kst.getUTCDay()] + ', 같은 날 호빵을 먹는 사람들';
+        /* 한국 시간 기준 오늘 자정(24:00 KST)까지 남은 시간 */
+        var msToday = ((kst.getUTCHours() * 60 + kst.getUTCMinutes()) * 60 + kst.getUTCSeconds()) * 1000 + kst.getUTCMilliseconds();
+        var diff = Math.max(0, Math.floor((86400000 - msToday) / 1000));
         var hh = String(Math.floor(diff / 3600)).padStart(2, '0');
         var mm = String(Math.floor(diff % 3600 / 60)).padStart(2, '0');
         var ss = String(diff % 60).padStart(2, '0');
